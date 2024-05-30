@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.hpp>
 
 class Application {
+    friend class VulkanDevice;
 public:
     Application(const char* title, int initWidth, int initHeight);
     Application(const char* title);
@@ -20,10 +21,10 @@ public:
     }
 
 protected:
-    bool InitWindow();
+    void InitWindow();
     void QuitWindow();
 
-    bool InitVulkanInstance();
+    void InitVulkanInstance();
     void QuitVulkanInstance();
 
 private:
@@ -38,5 +39,6 @@ private:
 
     SDL_Window* m_Window = nullptr;
     vk::Instance m_VulkanInstance = nullptr;
+    vk::SurfaceKHR m_WindowSurface = nullptr;
 };
 

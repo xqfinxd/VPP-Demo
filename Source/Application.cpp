@@ -3,6 +3,7 @@
 #include <chrono>
 #include <thread>
 #include <SDL2/SDL.h>
+#include "VulkanDevice.h"
 
 Application::Application(const char* title, int initWidth, int initHeight)
     : m_Title(title), m_Width(initWidth), m_Height(initHeight) {
@@ -25,15 +26,9 @@ void Application::Run() {
     if (m_LockFps)
         duration = kOneSec / m_LockFps;
 
-    { // window
-        bool succeed = InitWindow();
-        SDL_assert(succeed);
-    }
-
-    { // vulkan instance
-        bool succeed = InitVulkanInstance();
-        SDL_assert(succeed);
-    }
+    InitWindow();
+    InitVulkanInstance();
+    auto vulkanDevice = std::make_unique<VulkanDevice>(*this);
 
     m_Running = true;
     while (m_Running) {
@@ -56,14 +51,14 @@ void Application::Run() {
             std::this_thread::sleep_for(duration - elapsed);
     }
 
+    vulkanDevice.reset();
     QuitVulkanInstance();
     QuitWindow();
 }
 
-bool Application::InitWindow() {
+void Application::InitWindow() {
     if (0 != SDL_Init(SDL_INIT_EVERYTHING)) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, SDL_GetError());
-        return false;
+        throw std::runtime_error(SDL_GetError());
     }
 
     uint32_t windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN;
@@ -74,11 +69,8 @@ bool Application::InitWindow() {
         m_Width, m_Height,
         windowFlags);
     if (!m_Window) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, SDL_GetError());
-        return false;
+        throw std::runtime_error(SDL_GetError());
     }
-
-    return true;
 }
 
 void Application::QuitWindow() {
@@ -88,7 +80,7 @@ void Application::QuitWindow() {
     }
 }
 
-bool Application::InitVulkanInstance() {
+void Application::InitVulkanInstance() {
     auto appCI = vk::ApplicationInfo()
         .setPNext(nullptr)
         .setPApplicationName("VPP-Demo")
@@ -116,12 +108,24 @@ bool Application::InitVulkanInstance() {
         .setPEnabledExtensionNames(extensions)
         .setPApplicationInfo(&appCI);
 
-    auto result = vk::createInstance(&instCI, nullptr, &m_VulkanInstance);
-    return result == vk::Result::eSuccess;
+    m_VulkanInstance = vk::createInstance(instCI);
+    if (!m_VulkanInstance) {
+        throw std::runtime_error("failed to create instance!");
+    }
+        
+    VkSurfaceKHR cSurf;
+    SDL_bool surfCreated = SDL_Vulkan_CreateSurface(m_Window, m_VulkanInstance, &cSurf);
+    if (SDL_TRUE != surfCreated || cSurf == VK_NULL_HANDLE) {
+        throw std::runtime_error("failed to create surface!");
+    }
+    m_WindowSurface = cSurf;
 }
 
 void Application::QuitVulkanInstance() {
     if (m_VulkanInstance) {
+        if (m_WindowSurface)
+            m_VulkanInstance.destroy(m_WindowSurface);
+
         m_VulkanInstance.destroy();
     }
 }
