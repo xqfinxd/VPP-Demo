@@ -21,18 +21,12 @@
     <ClCompile Include="Source\Application.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Source\VulkanDevice.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Application.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\VulkanDevice.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
