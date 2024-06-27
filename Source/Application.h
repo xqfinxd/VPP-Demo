@@ -37,8 +37,10 @@ private:
     void CreateSurface();
     void PickPhysicalDevice();
     void CreateDevice();
+    void CreateSwapchain();
+    void CreateImageViews();
 
-    bool IsDeviceSuitable(VkPhysicalDevice gpu, VkSurfaceKHR surface) const;
+    bool IsDeviceSuitable(VkPhysicalDevice gpu) const;
     
 
 private:
@@ -58,8 +60,18 @@ private:
     VkInstance m_Instance = VK_NULL_HANDLE;
     VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
     VkPhysicalDevice m_Gpu = VK_NULL_HANDLE;
-    VkDevice m_Device;
-    VkQueue m_GraphicsQueue;
-    VkQueue m_PresentQueue;
+    
+    // concern about device
+    VkDevice m_Device = VK_NULL_HANDLE;
+    VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
+    VkQueue m_PresentQueue = VK_NULL_HANDLE;
+
+    // concern about swapchain
+    VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
+    uint32_t m_SwapImageCount = 0;
+    std::unique_ptr<VkImage[]> m_SwapImages;
+    VkFormat m_SwapImageFormat = VK_FORMAT_UNDEFINED;
+    VkExtent2D m_SwapImageExtent;
+    std::unique_ptr<VkImageView[]> m_SwapImageViews;
 };
 
