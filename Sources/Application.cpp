@@ -200,6 +200,9 @@ void Application::InitVulkan() {
     CreateImageViews();
     CreateRenderPass();
     CreateSimplePipeline();
+    CreateFramebuffers();
+    CreateCommandPool();
+    CreateCommandBuffers();
 }
 
 void Application::MainLoop() {
@@ -235,6 +238,12 @@ void Application::MainLoop() {
 }
 
 void Application::Cleanup() {
+    vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
+
+    for (uint32_t i = 0; i < m_SwapImageCount; i++) {
+        vkDestroyFramebuffer(m_Device, m_Framebuffers[i], nullptr);
+        m_Framebuffers[i] = VK_NULL_HANDLE;
+    }
     vkDestroyPipeline(m_Device, m_SimplePipeline, nullptr);
     vkDestroyPipelineLayout(m_Device, m_SimplePipelineLayout, nullptr);
     vkDestroyRenderPass(m_Device, m_SimpleRenderPass, nullptr);
@@ -466,7 +475,8 @@ void Application::CreateRenderPass() {
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
 
-    if (vkCreateRenderPass(m_Device, &renderPassInfo, nullptr, &m_SimpleRenderPass) != VK_SUCCESS) {
+    if (vkCreateRenderPass(m_Device, &renderPassInfo, nullptr,
+        &m_SimpleRenderPass) != VK_SUCCESS) {
         throw std::runtime_error("failed to create render pass!");
     }
 }
@@ -480,7 +490,8 @@ bool Application::IsDeviceSuitable(VkPhysicalDevice gpu) const {
     if (extensionsSupported) {
         SwapchainSupportDetails swapchainSupport;
         swapchainSupport.Reset(gpu, m_Surface);
-        swapchainAdequate = !swapchainSupport.formats.empty() && !swapchainSupport.presentModes.empty();
+        swapchainAdequate = !swapchainSupport.formats.empty() &&
+            !swapchainSupport.presentModes.empty();
     }
 
     return indices.IsComplete() && extensionsSupported && swapchainAdequate;
@@ -502,7 +513,8 @@ VkShaderModule Application::CreateShaderModule(const char* filename) {
     createInfo.codeSize = buffer.size();
     createInfo.pCode = reinterpret_cast<const uint32_t*>(buffer.data());
     VkShaderModule shaderModule;
-    if (vkCreateShaderModule(m_Device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+    if (vkCreateShaderModule(m_Device, &createInfo, nullptr,
+        &shaderModule) != VK_SUCCESS) {
         throw std::runtime_error("failed to create shader module!");
     }
 
@@ -655,9 +667,55 @@ void Application::CreateSimplePipeline() {
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;
-    if (vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1,
-        &pipelineInfo, nullptr, &m_SimplePipeline) != VK_SUCCESS) {
+    if (vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr,
+        &m_SimplePipeline) != VK_SUCCESS) {
         throw std::runtime_error("failed to create graphics pipeline!");
+    }
+}
+
+void Application::CreateFramebuffers() {
+    m_Framebuffers = std::make_unique<VkFramebuffer[]>(m_SwapImageCount);
+    for (size_t i = 0; i < m_SwapImageCount; i++) {
+        VkImageView attachments[] = {
+            m_SwapImageViews[i]
+        };
+        VkFramebufferCreateInfo framebufferInfo{};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = m_SimpleRenderPass;
+        framebufferInfo.attachmentCount = 1;
+        framebufferInfo.pAttachments = attachments;
+        framebufferInfo.width = m_SwapImageExtent.width;
+        framebufferInfo.height = m_SwapImageExtent.height;
+        framebufferInfo.layers = 1;
+        if (vkCreateFramebuffer(m_Device,
+            &framebufferInfo, nullptr, &m_Framebuffers[i]) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create framebuffer!");
+        }
+    }
+}
+
+void Application::CreateCommandPool() {
+    QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(m_Gpu, m_Surface);
+    VkCommandPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
+    poolInfo.flags = 0;
+    if (vkCreateCommandPool(m_Device, &poolInfo, nullptr,
+        &m_CommandPool) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create command pool!");
+    }
+}
+
+void Application::CreateCommandBuffers() {
+    m_CommandBuffers = std::make_unique<VkCommandBuffer[]>(m_SwapImageCount);
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = m_CommandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = m_SwapImageCount;
+    if (vkAllocateCommandBuffers(m_Device, &allocInfo,
+        m_CommandBuffers.get()) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate command buffers!");
     }
 }
 
