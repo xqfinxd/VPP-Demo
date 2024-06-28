@@ -39,10 +39,12 @@ private:
     void CreateDevice();
     void CreateSwapchain();
     void CreateImageViews();
+    void CreateRenderPass();
 
     bool IsDeviceSuitable(VkPhysicalDevice gpu) const;
+    VkShaderModule CreateShaderModule(const char* filename);
+    void CreateSimplePipeline();
     
-
 private:
     int m_Width = 0;
     int m_Height = 0;
@@ -73,5 +75,9 @@ private:
     VkFormat m_SwapImageFormat = VK_FORMAT_UNDEFINED;
     VkExtent2D m_SwapImageExtent;
     std::unique_ptr<VkImageView[]> m_SwapImageViews;
+
+    VkPipeline m_SimplePipeline = VK_NULL_HANDLE;
+    VkRenderPass m_SimpleRenderPass = VK_NULL_HANDLE;
+    VkPipelineLayout m_SimplePipelineLayout = VK_NULL_HANDLE;
 };
 
