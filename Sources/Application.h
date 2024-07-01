@@ -32,6 +32,7 @@ private:
     void InitVulkan();
     void MainLoop();
     void Cleanup();
+    void DrawFrame();
 
     void CreateInstance();
     void CreateSurface();
@@ -44,6 +45,8 @@ private:
     void CreateFramebuffers();
     void CreateCommandPool();
     void CreateCommandBuffers();
+    void CreateSemaphores();
+    void RecordCommands();
 
     bool IsDeviceSuitable(VkPhysicalDevice gpu) const;
     VkShaderModule CreateShaderModule(const char* filename);
@@ -86,5 +89,8 @@ private:
     VkPipeline m_SimplePipeline = VK_NULL_HANDLE;
     VkRenderPass m_SimpleRenderPass = VK_NULL_HANDLE;
     VkPipelineLayout m_SimplePipelineLayout = VK_NULL_HANDLE;
+
+    VkSemaphore m_ImageAvailableSemaphore = VK_NULL_HANDLE;
+    VkSemaphore m_RenderFinishedSemaphore = VK_NULL_HANDLE;
 };
 
