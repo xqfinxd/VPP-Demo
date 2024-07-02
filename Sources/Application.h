@@ -45,7 +45,7 @@ private:
     void CreateFramebuffers();
     void CreateCommandPool();
     void CreateCommandBuffers();
-    void CreateSemaphores();
+    void CreateSyncObjects(uint32_t frameNum);
     void RecordCommands();
 
     bool IsDeviceSuitable(VkPhysicalDevice gpu) const;
@@ -90,7 +90,10 @@ private:
     VkRenderPass m_SimpleRenderPass = VK_NULL_HANDLE;
     VkPipelineLayout m_SimplePipelineLayout = VK_NULL_HANDLE;
 
-    VkSemaphore m_ImageAvailableSemaphore = VK_NULL_HANDLE;
-    VkSemaphore m_RenderFinishedSemaphore = VK_NULL_HANDLE;
+    uint32_t m_FrameCountInFlight = 0;
+    std::unique_ptr<VkSemaphore[]> m_ImageAvailableSemaphores;
+    std::unique_ptr<VkSemaphore[]> m_RenderFinishedSemaphores;
+    std::unique_ptr<VkFence[]> m_InFlightFences;
+    uint32_t m_CurrentFrame = 0;
 };
 
