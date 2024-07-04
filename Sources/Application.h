@@ -38,7 +38,11 @@ private:
     void CreateSurface();
     void PickPhysicalDevice();
     void CreateDevice();
+    void RecreateSwapchain();
     void CreateSwapchain();
+    void CleanSwapchainResources();
+
+    void CreateSwapchainImpl(VkSwapchainKHR oldSwapchain);
     void CreateImageViews();
     void CreateRenderPass();
     void CreateSimplePipeline();
@@ -46,7 +50,7 @@ private:
     void CreateCommandPool();
     void CreateCommandBuffers();
     void CreateSyncObjects(uint32_t frameNum);
-    void RecordCommands();
+    void RecordCommand(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
     bool IsDeviceSuitable(VkPhysicalDevice gpu) const;
     VkShaderModule CreateShaderModule(const char* filename);
@@ -60,6 +64,8 @@ private:
 
     double m_RealtimeFps = 0;
     bool m_Running = false;
+
+    bool m_WindowResized = false;
 
     std::vector<const char*> m_ValidationLayers;
     std::vector<const char*> m_DeviceExtensions;
