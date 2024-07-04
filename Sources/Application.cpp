@@ -163,15 +163,10 @@ void Application::InitProperty() {
     m_Title = "Demo";
     m_LockFps = 60;
 
-    new(&m_ValidationLayers) std::vector<const char*>({
 #ifdef _DEBUG
-        "VK_LAYER_KHRONOS_validation",
+    m_ValidationLayers.push_back("VK_LAYER_KHRONOS_validation"),
 #endif
-    });
-
-    new(&m_DeviceExtensions) std::vector<const char*>({
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    });
+        m_DeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 }
 
 void Application::InitWindow() {
@@ -254,7 +249,7 @@ void Application::Cleanup() {
         vkDestroySemaphore(m_Device, m_ImageAvailableSemaphores[i], nullptr);
         vkDestroyFence(m_Device, m_InFlightFences[i], nullptr);
     }
-    
+
     vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
 
     vkDestroyDevice(m_Device, nullptr);
@@ -287,7 +282,8 @@ void Application::DrawFrame() {
     if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR) {
         RecreateSwapchain();
         return;
-    } else if (acquireResult != VK_SUCCESS && acquireResult != VK_SUBOPTIMAL_KHR) {
+    }
+    else if (acquireResult != VK_SUCCESS && acquireResult != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
@@ -325,7 +321,8 @@ void Application::DrawFrame() {
         m_WindowResized) {
         m_WindowResized = false;
         RecreateSwapchain();
-    } else if (presentResult != VK_SUCCESS) {
+    }
+    else if (presentResult != VK_SUCCESS) {
         throw std::runtime_error("failed to present swap chain image!");
     }
 
@@ -352,9 +349,9 @@ void Application::RecreateSwapchain() {
     VkSwapchainKHR oldSwapchain = m_Swapchain;
     CreateSwapchainImpl(oldSwapchain);
     vkDestroySwapchainKHR(m_Device, oldSwapchain, nullptr);
-    
+
     CreateImageViews();
-    CreateRenderPass();
+    CreateSimpleRenderPass();
     CreateSimplePipeline();
     CreateFramebuffers();
     CreateCommandBuffers();
@@ -368,7 +365,7 @@ void Application::CreateSwapchain() {
     CreateSwapchainImpl(VK_NULL_HANDLE);
 
     CreateImageViews();
-    CreateRenderPass();
+    CreateSimpleRenderPass();
     CreateSimplePipeline();
     CreateFramebuffers();
     CreateCommandBuffers();
@@ -565,7 +562,7 @@ void Application::CreateImageViews() {
     }
 }
 
-void Application::CreateRenderPass() {
+void Application::CreateSimpleRenderPass() {
     VkAttachmentDescription colorAttachment{};
     colorAttachment.format = m_SwapImageFormat;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;

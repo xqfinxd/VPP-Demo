@@ -44,13 +44,14 @@ private:
 
     void CreateSwapchainImpl(VkSwapchainKHR oldSwapchain);
     void CreateImageViews();
-    void CreateRenderPass();
-    void CreateSimplePipeline();
     void CreateFramebuffers();
     void CreateCommandPool();
     void CreateCommandBuffers();
     void CreateSyncObjects(uint32_t frameNum);
     void RecordCommand(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+
+    void CreateSimpleRenderPass();
+    void CreateSimplePipeline();
 
     bool IsDeviceSuitable(VkPhysicalDevice gpu) const;
     VkShaderModule CreateShaderModule(const char* filename);
