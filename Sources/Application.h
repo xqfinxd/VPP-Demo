@@ -53,6 +53,8 @@ private:
     void CreateSimpleRenderPass();
     void CreateSimplePipeline();
 
+    void CreateVertexPipeline();
+
     bool IsDeviceSuitable(VkPhysicalDevice gpu) const;
     VkShaderModule CreateShaderModule(const char* filename);
     
@@ -93,9 +95,13 @@ private:
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
     std::unique_ptr<VkCommandBuffer[]> m_CommandBuffers;
 
-    VkPipeline m_SimplePipeline = VK_NULL_HANDLE;
     VkRenderPass m_SimpleRenderPass = VK_NULL_HANDLE;
+
+    VkPipeline m_SimplePipeline = VK_NULL_HANDLE;
     VkPipelineLayout m_SimplePipelineLayout = VK_NULL_HANDLE;
+
+    VkPipeline m_VertexPipeline = VK_NULL_HANDLE;
+    VkPipelineLayout m_VertexPipelineLayout = VK_NULL_HANDLE;
 
     uint32_t m_FrameCountInFlight = 0;
     std::unique_ptr<VkSemaphore[]> m_ImageAvailableSemaphores;
