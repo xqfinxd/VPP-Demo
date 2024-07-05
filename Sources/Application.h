@@ -50,13 +50,16 @@ private:
     void CreateSyncObjects(uint32_t frameNum);
     void RecordCommand(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
-    void CreateSimpleRenderPass();
-    void CreateSimplePipeline();
+    void CreateVertexBuffer(uint32_t stride, uint32_t count, void* data);
 
+    void CreateSimpleRenderPass();
+
+    void CreateSimplePipeline();
     void CreateVertexPipeline();
 
     bool IsDeviceSuitable(VkPhysicalDevice gpu) const;
     VkShaderModule CreateShaderModule(const char* filename);
+    uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     
 private:
     int m_Width = 0;
@@ -108,5 +111,8 @@ private:
     std::unique_ptr<VkSemaphore[]> m_RenderFinishedSemaphores;
     std::unique_ptr<VkFence[]> m_InFlightFences;
     uint32_t m_CurrentFrame = 0;
+
+    VkBuffer m_VertexBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory m_VertexBufferMemory = VK_NULL_HANDLE;
 };
 
