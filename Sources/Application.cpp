@@ -180,6 +180,10 @@ void Application::InitWindow() {
         throw std::runtime_error(SDL_GetError());
     }
 
+#ifdef SDL_HINT_IME_SHOW_UI
+    SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
+#endif
+
     uint32_t windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE;
     if (m_Fullscreen) windowFlags |= SDL_WINDOW_FULLSCREEN;
     m_Window = SDL_CreateWindow(m_Title.c_str(),

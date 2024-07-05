@@ -12,13 +12,30 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Sources\Application.cpp" />
+    <ClCompile Include="Sources\ImGuiConsole.cpp" />
     <ClCompile Include="Sources\Main.cpp" />
+    <ClCompile Include="Vendors\imgui\backends\imgui_impl_sdl2.cpp" />
+    <ClCompile Include="Vendors\imgui\backends\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="Vendors\imgui\imgui.cpp" />
+    <ClCompile Include="Vendors\imgui\imgui_demo.cpp" />
+    <ClCompile Include="Vendors\imgui\imgui_draw.cpp" />
+    <ClCompile Include="Vendors\imgui\imgui_tables.cpp" />
+    <ClCompile Include="Vendors\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
+    <None Include=".gitmodules" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Sources\Application.h" />
+    <ClInclude Include="Vendors\imgui\backends\imgui_impl_sdl2.h" />
+    <ClInclude Include="Vendors\imgui\backends\imgui_impl_vulkan.h" />
+    <ClInclude Include="Vendors\imgui\imconfig.h" />
+    <ClInclude Include="Vendors\imgui\imgui.h" />
+    <ClInclude Include="Vendors\imgui\imgui_internal.h" />
+    <ClInclude Include="Vendors\imgui\imstb_rectpack.h" />
+    <ClInclude Include="Vendors\imgui\imstb_textedit.h" />
+    <ClInclude Include="Vendors\imgui\imstb_truetype.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -65,7 +82,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Vendors\imgui;$(SolutionDir)Vendors\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -82,7 +99,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Vendors\imgui;$(SolutionDir)Vendors\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
