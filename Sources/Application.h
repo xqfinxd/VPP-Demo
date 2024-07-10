@@ -1,7 +1,7 @@
 #pragma once
 
-#include <SDL2/SDL_video.h>
-#include <SDL2/SDL_vulkan.h>
+#include <SDL_video.h>
+#include <SDL_vulkan.h>
 #include <vulkan/vulkan.hpp>
 
 struct QueueFamilyIndices {
@@ -33,6 +33,7 @@ private:
     void MainLoop();
     void Cleanup();
     void DrawFrame();
+    void InitImGui();
 
     void CreateInstance();
     void CreateSurface();
@@ -114,5 +115,7 @@ private:
 
     VkBuffer m_VertexBuffer = VK_NULL_HANDLE;
     VkDeviceMemory m_VertexBufferMemory = VK_NULL_HANDLE;
+
+    VkDescriptorPool m_ImGuiDescriptorPool = VK_NULL_HANDLE;
 };
 

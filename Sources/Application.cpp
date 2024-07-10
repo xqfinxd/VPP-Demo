@@ -4,8 +4,11 @@
 #include <thread>
 #include <set>
 #include <fstream>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <glm/glm.hpp>
+#include <imgui.h>
+#include <imgui_impl_sdl2.h>
+#include <imgui_impl_vulkan.h>
 
 namespace
 {
@@ -16,7 +19,7 @@ struct Vertex {
 };
 
 struct SwapchainSupportDetails {
-    VkSurfaceCapabilitiesKHR capabilities;
+    VkSurfaceCapabilitiesKHR capabilities{};
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
 
@@ -209,6 +212,9 @@ void Application::InitVulkan() {
     };
     CreateVertexBuffer(sizeof(Vertex), 3, (void*)vertices.data());
     CreateSwapchain();
+    for (uint32_t i = 0; i < m_SwapImageCount; i++) {
+        RecordCommand(m_CommandBuffers[i], i);
+    }
     CreateSyncObjects(2);
 }
 
@@ -238,13 +244,19 @@ void Application::MainLoop() {
                 Exit();
             }
 
-            if (SDL_WINDOWEVENT == cacheEvent.type) {
-                if (cacheEvent.window.event == SDL_WINDOWEVENT_RESIZED) {
-                    m_WindowResized = true;
+            int actualWidth = 0, actualHeight = 0;
+            SDL_Vulkan_GetDrawableSize(m_Window, &actualWidth, &actualHeight);
+            if (actualWidth > 0 && actualHeight > 0) {
+                if (m_WindowResized) {
+                    RecreateSwapchain();
+                    for (uint32_t i = 0; i < m_SwapImageCount; i++) {
+                        RecordCommand(m_CommandBuffers[i], i);
+                    }
+                    m_WindowResized = false;
                 }
-            }
 
-            DrawFrame();
+                DrawFrame();
+            }
         }
 
         auto frameEnd = std::chrono::high_resolution_clock::now();
@@ -280,12 +292,6 @@ void Application::Cleanup() {
 }
 
 void Application::DrawFrame() {
-    int actualWidth = 0, actualHeight = 0;
-    SDL_Vulkan_GetDrawableSize(m_Window, &actualWidth, &actualHeight);
-    if (actualWidth == 0 || actualHeight == 0) {
-        return;
-    }
-
     SDL_assert(m_CurrentFrame < m_FrameCountInFlight);
 
     const auto inFlight = m_InFlightFences[m_CurrentFrame];
@@ -295,16 +301,18 @@ void Application::DrawFrame() {
     vkWaitForFences(m_Device, 1, &inFlight, VK_TRUE, UINT64_MAX);
     vkResetFences(m_Device, 1, &inFlight);
 
-    uint32_t imageIndex;
+    uint32_t imageIndex = UINT32_MAX;
     VkResult acquireResult = vkAcquireNextImageKHR(m_Device, m_Swapchain, UINT64_MAX,
         imageAvailable, VK_NULL_HANDLE, &imageIndex);
-    if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR) {
-        RecreateSwapchain();
+    if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR ||
+        acquireResult == VK_SUBOPTIMAL_KHR) {
+        m_WindowResized = true;
         return;
-    }
-    else if (acquireResult != VK_SUCCESS && acquireResult != VK_SUBOPTIMAL_KHR) {
+    } else if (acquireResult != VK_SUCCESS) {
         throw std::runtime_error("failed to acquire swap chain image!");
     }
+
+    SDL_assert(imageIndex < m_SwapImageCount);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -321,8 +329,7 @@ void Application::DrawFrame() {
 
     vkResetFences(m_Device, 1, &inFlight);
 
-    if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, inFlight) !=
-        VK_SUCCESS) {
+    if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, inFlight) != VK_SUCCESS) {
         throw std::runtime_error("failed to submit draw command buffer!");
     }
 
@@ -336,16 +343,59 @@ void Application::DrawFrame() {
     presentInfo.pImageIndices = &imageIndex;
     VkResult presentResult = vkQueuePresentKHR(m_PresentQueue, &presentInfo);
     if (presentResult == VK_ERROR_OUT_OF_DATE_KHR ||
-        presentResult == VK_SUBOPTIMAL_KHR ||
-        m_WindowResized) {
-        m_WindowResized = false;
-        RecreateSwapchain();
-    }
-    else if (presentResult != VK_SUCCESS) {
+        presentResult == VK_SUBOPTIMAL_KHR) {
+        m_WindowResized = true;
+        return;
+    } else if (presentResult != VK_SUCCESS) {
         throw std::runtime_error("failed to present swap chain image!");
     }
 
     m_CurrentFrame = (m_CurrentFrame + 1) % m_FrameCountInFlight;
+}
+
+void Application::InitImGui() {
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
+
+    VkDescriptorPoolSize poolSizes[] =
+    {
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
+    };
+    VkDescriptorPoolCreateInfo poolInfo = {};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    poolInfo.maxSets = 1;
+    poolInfo.poolSizeCount = (uint32_t)IM_ARRAYSIZE(poolSizes);
+    poolInfo.pPoolSizes = poolSizes;
+    vkCreateDescriptorPool(m_Device, &poolInfo, nullptr, &m_ImGuiDescriptorPool);
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplSDL2_InitForVulkan(m_Window);
+    ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.Instance = m_Instance;
+    init_info.PhysicalDevice = m_Gpu;
+    init_info.Device = m_Device;
+    QueueFamilyIndices indices = FindQueueFamilies(m_Gpu, m_Surface);
+    init_info.QueueFamily = indices.graphicsFamily;
+    init_info.Queue = m_GraphicsQueue;
+    init_info.PipelineCache = VK_NULL_HANDLE;
+    init_info.DescriptorPool = m_ImGuiDescriptorPool;
+    init_info.RenderPass = m_SimpleRenderPass;
+    init_info.Subpass = 0;
+    SwapchainSupportDetails swapchainSupport;
+    swapchainSupport.Reset(m_Gpu, m_Surface);
+    init_info.MinImageCount = swapchainSupport.capabilities.minImageCount;
+    init_info.ImageCount = m_SwapImageCount;
+    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    ImGui_ImplVulkan_Init(&init_info);
 }
 
 void Application::CleanSwapchainResources() {
@@ -377,10 +427,6 @@ void Application::RecreateSwapchain() {
     CreateVertexPipeline();
     CreateFramebuffers();
     CreateCommandBuffers();
-
-    for (uint32_t i = 0; i < m_SwapImageCount; i++) {
-        RecordCommand(m_CommandBuffers[i], i);;
-    }
 }
 
 void Application::CreateSwapchain() {
@@ -392,10 +438,6 @@ void Application::CreateSwapchain() {
     CreateVertexPipeline();
     CreateFramebuffers();
     CreateCommandBuffers();
-
-    for (uint32_t i = 0; i < m_SwapImageCount; i++) {
-        RecordCommand(m_CommandBuffers[i], i);;
-    }
 }
 
 void Application::CreateInstance() {
@@ -1071,7 +1113,7 @@ void Application::RecordCommand(VkCommandBuffer commandBuffer, uint32_t imageInd
 void Application::CreateVertexBuffer(uint32_t stride, uint32_t count, void* data) {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = stride * count;
+    bufferInfo.size = (uint64_t)stride * count;
     bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
