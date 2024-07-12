@@ -30,10 +30,11 @@ private:
     void InitProperty();
     void InitWindow();
     void InitVulkan();
+    void InitImGui();
     void MainLoop();
     void Cleanup();
-    void DrawFrame();
-    void InitImGui();
+    bool FrameUpdate();
+    void FramePresent();
 
     void CreateInstance();
     void CreateSurface();
@@ -49,7 +50,7 @@ private:
     void CreateCommandPool();
     void CreateCommandBuffers();
     void CreateSyncObjects(uint32_t frameNum);
-    void RecordCommand(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    void RecordCommand(uint32_t imageIndex);
 
     void CreateVertexBuffer(uint32_t stride, uint32_t count, void* data);
 
@@ -69,7 +70,6 @@ private:
     std::string m_Title;
     uint32_t m_LockFps = 0;
 
-    double m_RealtimeFps = 0;
     bool m_Running = false;
 
     bool m_WindowResized = false;
@@ -96,6 +96,7 @@ private:
     std::unique_ptr<VkImageView[]> m_SwapImageViews;
 
     std::unique_ptr<VkFramebuffer[]> m_Framebuffers;
+
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
     std::unique_ptr<VkCommandBuffer[]> m_CommandBuffers;
 
@@ -107,11 +108,13 @@ private:
     VkPipeline m_VertexPipeline = VK_NULL_HANDLE;
     VkPipelineLayout m_VertexPipelineLayout = VK_NULL_HANDLE;
 
-    uint32_t m_FrameCountInFlight = 0;
+    uint32_t m_SyncObjCount = 0;
+    uint32_t m_CurSyncFrame = 0;
     std::unique_ptr<VkSemaphore[]> m_ImageAvailableSemaphores;
     std::unique_ptr<VkSemaphore[]> m_RenderFinishedSemaphores;
     std::unique_ptr<VkFence[]> m_InFlightFences;
-    uint32_t m_CurrentFrame = 0;
+
+    uint32_t m_FrameIndex = UINT32_MAX;
 
     VkBuffer m_VertexBuffer = VK_NULL_HANDLE;
     VkDeviceMemory m_VertexBufferMemory = VK_NULL_HANDLE;
