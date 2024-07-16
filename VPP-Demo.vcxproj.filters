@@ -37,9 +37,6 @@
     <ClCompile Include="Vendors\imgui\imgui_widgets.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\ImGuiConsole.cpp">
-      <Filter>ImGui</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
