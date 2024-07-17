@@ -99,8 +99,10 @@ private:
 
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
     std::unique_ptr<VkCommandBuffer[]> m_CommandBuffers;
+    std::unique_ptr<VkCommandBuffer[]> m_ImGuiCommandBuffers;
 
     VkRenderPass m_SimpleRenderPass = VK_NULL_HANDLE;
+    VkRenderPass m_ImGuiRenderPass = VK_NULL_HANDLE;
 
     VkPipeline m_SimplePipeline = VK_NULL_HANDLE;
     VkPipelineLayout m_SimplePipelineLayout = VK_NULL_HANDLE;
