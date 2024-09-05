@@ -4,18 +4,37 @@
 #include <SDL_vulkan.h>
 #include <vulkan/vulkan.hpp>
 
-struct QueueFamilyIndices {
-    uint32_t graphicsFamily = UINT32_MAX;
-    uint32_t presentFamily = UINT32_MAX;
-
-    bool IsComplete() const {
-        return graphicsFamily != UINT32_MAX
-            && presentFamily != UINT32_MAX;
-    }
-};
-
 class Application {
-    friend class VulkanDevice;
+public:
+    struct Queue {
+        VkQueue     object = VK_NULL_HANDLE;
+        uint32_t    familyIndex = 0;
+    };
+
+    struct Swapchain {
+        VkSwapchainKHR          object = VK_NULL_HANDLE;
+        std::vector<VkImage>    imageObjects;
+        VkFormat                imageFormat = VK_FORMAT_UNDEFINED;
+        VkExtent2D              imageExtent;
+
+        uint32_t GetImageCount() const {
+            return (uint32_t)imageObjects.size();
+        }
+    };
+
+    struct Framebuffer {
+        VkFramebuffer   object = VK_NULL_HANDLE;
+        VkImageView     colorImage = VK_NULL_HANDLE;
+        VkImageView     depthImage = VK_NULL_HANDLE;
+        VkExtent2D      extent;
+    };
+
+    struct SyncObject {
+        VkSemaphore imageAcquired;
+        VkSemaphore renderFinished;
+        VkFence     inFlight;
+    };
+
 public:
     void SetLockFps(uint32_t fps) {
         m_LockFps = fps;
@@ -45,7 +64,6 @@ private:
     void CleanSwapchainResources();
 
     void CreateSwapchainImpl(VkSwapchainKHR oldSwapchain);
-    void CreateImageViews();
     void CreateFramebuffers();
     void CreateCommandPool();
     void CreateCommandBuffers();
@@ -59,43 +77,37 @@ private:
     void CreateSimplePipeline();
     void CreateVertexPipeline();
 
-    bool IsDeviceSuitable(VkPhysicalDevice gpu) const;
+    bool IsGpuSuitable(VkPhysicalDevice gpu) const;
     VkShaderModule CreateShaderModule(const char* filename);
     uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     
 private:
-    int m_Width = 0;
-    int m_Height = 0;
-    bool m_Fullscreen = false;
+    int         m_Width = 0;
+    int         m_Height = 0;
+    bool        m_Fullscreen = false;
     std::string m_Title;
-    uint32_t m_LockFps = 0;
+    uint32_t    m_LockFps = 0;
 
     bool m_Running = false;
-
     bool m_WindowResized = false;
 
     std::vector<const char*> m_ValidationLayers;
     std::vector<const char*> m_DeviceExtensions;
 
-    SDL_Window* m_Window = nullptr;
-    VkInstance m_Instance = VK_NULL_HANDLE;
-    VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
-    VkPhysicalDevice m_Gpu = VK_NULL_HANDLE;
+    SDL_Window*         m_Window = nullptr;
+    VkInstance          m_Instance = VK_NULL_HANDLE;
+    VkSurfaceKHR        m_Surface = VK_NULL_HANDLE;
+    VkPhysicalDevice    m_Gpu = VK_NULL_HANDLE;
     
     // concern about device
-    VkDevice m_Device = VK_NULL_HANDLE;
-    VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
-    VkQueue m_PresentQueue = VK_NULL_HANDLE;
+    VkDevice    m_Device = VK_NULL_HANDLE;
+    Queue       m_GraphicsQueue;
+    Queue       m_PresentQueue;
 
     // concern about swapchain
-    VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
-    uint32_t m_SwapImageCount = 0;
-    std::unique_ptr<VkImage[]> m_SwapImages;
-    VkFormat m_SwapImageFormat = VK_FORMAT_UNDEFINED;
-    VkExtent2D m_SwapImageExtent;
-    std::unique_ptr<VkImageView[]> m_SwapImageViews;
+    Swapchain   m_Swapchain;
 
-    std::unique_ptr<VkFramebuffer[]> m_Framebuffers;
+    std::vector<Framebuffer> m_Framebuffers;
 
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
     std::unique_ptr<VkCommandBuffer[]> m_CommandBuffers;
@@ -110,11 +122,8 @@ private:
     VkPipeline m_VertexPipeline = VK_NULL_HANDLE;
     VkPipelineLayout m_VertexPipelineLayout = VK_NULL_HANDLE;
 
-    uint32_t m_SyncObjCount = 0;
-    uint32_t m_CurSyncFrame = 0;
-    std::unique_ptr<VkSemaphore[]> m_ImageAvailableSemaphores;
-    std::unique_ptr<VkSemaphore[]> m_RenderFinishedSemaphores;
-    std::unique_ptr<VkFence[]> m_InFlightFences;
+    uint32_t                m_CurSyncFrame = 0;
+    std::vector<SyncObject> m_SyncObjects;
 
     uint32_t m_FrameIndex = UINT32_MAX;
 
