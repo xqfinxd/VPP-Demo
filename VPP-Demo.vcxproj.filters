@@ -37,6 +37,12 @@
     <ClCompile Include="Vendors\imgui\imgui_widgets.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
+    <ClCompile Include="Sources\IApplication.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Device.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -68,6 +74,12 @@
       <Filter>ImGui</Filter>
     </ClInclude>
     <ClInclude Include="Sources\Application.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\IApplication.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Device.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>

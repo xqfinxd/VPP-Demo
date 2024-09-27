@@ -1,12 +1,11 @@
 ﻿#include <iostream>
 
-#include "Application.h"
+#include "IApplication.h"
 
 int main(int argc, char* argv[]) {
-    Application app;
-
     try {
-        app.Run();
+        auto* app = IApplication::Create();
+        app->Run();
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
